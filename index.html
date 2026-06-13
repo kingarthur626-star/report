@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新莊區 誠字班 執行回報</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: "Microsoft JhengHei", Arial, sans-serif; 
+      background-color: #f5f7fa; 
+      margin: 0; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+    }
+    .login-container { 
+      width: 100%; 
+      max-width: 400px; 
+      padding: 30px; 
+      background: #ffffff; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+      text-align: center;
+    }
+    h2 { 
+      color: #2c3e50; 
+      margin-bottom: 25px; 
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .input-group { 
+      margin-bottom: 20px; 
+      text-align: left; 
+    }
+    label { 
+      display: block; 
+      margin-bottom: 8px; 
+      color: #34495e; 
+      font-weight: bold;
+    }
+    input[type="text"], input[type="password"] { 
+      width: 100%; 
+      padding: 12px; 
+      border: 1px solid #ccd1d9; 
+      border-radius: 6px; 
+      font-size: 16px; 
+      background-color: #f8f9fa;
+    }
+    input:focus {
+      border-color: #4a90e2;
+      outline: none;
+      background-color: #fff;
+    }
+    button { 
+      width: 100%; 
+      padding: 12px; 
+      background-color: #4a90e2; 
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      font-size: 16px; 
+      font-weight: bold;
+      cursor: pointer; 
+      margin-top: 10px;
+    }
+    button:disabled { background-color: #a0a0a0; }
+    #msg { margin-top: 15px; font-size: 14px; color: #e74c3c; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>新莊區 誠字班<br>執行回報系統</h2>
+  
+  <form id="loginForm" onsubmit="submitLogin(); return false;">
+    <div class="input-group">
+      <label>帳號：</label>
+      <input type="text" id="username" required placeholder="請輸入帳號">
+    </div>
+    
+    <div class="input-group">
+      <label>密碼：</label>
+      <input type="password" id="password" required placeholder="請輸入密碼">
+    </div>
+    
+    <button type="submit" id="loginBtn">登入</button>
+  </form>
+  
+  <div id="msg"></div>
+</div>
+
+<script>
+  // 🔗 請在這裡貼上您剛剛複製的 GAS 網址
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz2fuieEYdaOpg-AmFyrvQk7VYq8OnQSGKiR-EqLX362b4odnavX2GcjC7yO-1GMDOx/exec";
+
+  function submitLogin() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    const btn = document.getElementById("loginBtn");
+    const msgDiv = document.getElementById("msg");
+    
+    btn.disabled = true;
+    btn.innerText = "安全驗證中...";
+    msgDiv.innerText = "";
+    
+    // 使用安全加密通道發送資料給後端 GAS
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ username: user, password: pass })
+    })
+    .then(response => response.json())
+    .then(result => {
+      btn.disabled = false;
+      btn.innerText = "登入";
+      
+      if (result.success) {
+        msgDiv.style.color = "#2ecc71";
+        msgDiv.innerText = result.message;
+        alert("登入成功！即將進入回報頁面。");
+        // 登入成功後跳轉邏輯寫在這裡
+      } else {
+        msgDiv.style.color = "#e74c3c";
+        msgDiv.innerText = result.message;
+      }
+    })
+    .catch(error => {
+      btn.disabled = false;
+      btn.innerText = "登入";
+      msgDiv.style.color = "#e74c3c";
+      msgDiv.innerText = "網路連線失敗，請檢查網路。";
+      console.error(error);
+    });
+  }
+</script>
+
+</body>
+</html>
