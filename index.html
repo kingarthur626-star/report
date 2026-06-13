@@ -85,7 +85,8 @@
     button:disabled { background-color: #a0a0a0; }
     .footer-links {
       margin-top: 20px;
-      text-align: right;
+      display: flex;
+      justify-content: space-between;
       font-size: 14px;
     }
     .footer-links a {
@@ -97,6 +98,7 @@
     .msg { margin-top: 15px; font-size: 14px; color: #e74c3c; font-weight: bold; min-height: 20px; }
     .hidden { display: none; }
     .hint { font-size: 12px; color: #7f8c8d; margin-top: 4px; }
+    .info-text { font-size: 16px; background: #e8f4fd; padding: 10px; border-radius: 6px; color: #2c3e50; font-weight: bold; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -116,6 +118,7 @@
   </form>
   <div id="loginMsg" class="msg"></div>
   <div class="footer-links">
+    <a href="#" onclick="switchPage('forgot')">忘記密碼</a>
     <a href="#" onclick="switchPage('register')">申請帳號</a>
   </div>
 </div>
@@ -123,29 +126,18 @@
 <div id="registerPage" class="container hidden">
   <h2>申請帳號</h2>
   <form onsubmit="submitRegister(); return false;">
-    
     <div class="input-group">
       <label>組別：</label>
       <div class="group-container">
-        <label class="group-option">
-          <input type="radio" name="groupSelect" value="1" onclick="filterTanNames()"> 第1組
-        </label>
-        <label class="group-option">
-          <input type="radio" name="groupSelect" value="2" onclick="filterTanNames()"> 第2組
-        </label>
-        <label class="group-option">
-          <input type="radio" name="groupSelect" value="3" onclick="filterTanNames()"> 第3組
-        </label>
+        <label class="group-option"><input type="radio" name="groupSelect" value="1" onclick="filterTanNames('regTan')"> 第1組</label>
+        <label class="group-option"><input type="radio" name="groupSelect" value="2" onclick="filterTanNames('regTan')"> 第2組</label>
+        <label class="group-option"><input type="radio" name="groupSelect" value="3" onclick="filterTanNames('regTan')"> 第3組</label>
       </div>
     </div>
-
     <div class="input-group">
       <label>壇名：</label>
-      <select id="regTan" required disabled>
-        <option value="">請先圈選組別...</option>
-      </select>
+      <select id="regTan" required disabled><option value="">請先圈選組別...</option></select>
     </div>
-    
     <div class="input-group">
       <label>姓名：</label>
       <input type="text" id="regName" required placeholder="請輸入真實姓名">
@@ -153,164 +145,230 @@
     <div class="input-group">
       <label>帳號：</label>
       <input type="email" id="regUser" required placeholder="例如: example@gmail.com">
-      <div class="hint">請輸入完整的 Gmail 帳號（系統將自動存為小寫）</div>
     </div>
     <div class="input-group">
       <label>密碼：</label>
       <input type="text" id="regPass" required pattern="[1-9][0-9]*" placeholder="例如: 912345678">
-      <div class="hint">請輸入手機號碼，開頭不含0 (純數字)</div>
+      <div class="hint">請輸入手機號碼，開頭不含0</div>
     </div>
     <button type="submit" id="regBtn">送出申請</button>
   </form>
   <div id="regMsg" class="msg"></div>
-  <div class="footer-links">
+  <div class="footer-links" style="justify-content: flex-end;">
     <a href="#" onclick="switchPage('login')">返回登入</a>
   </div>
 </div>
 
+<div id="forgotPage" class="container hidden">
+  <h2>忘記密碼 / 變更密碼</h2>
+  <form onsubmit="submitForgot(); return false;">
+    <div class="input-group">
+      <label>組別：</label>
+      <div class="group-container">
+        <label class="group-option"><input type="radio" name="forgotGroupSelect" value="1" onclick="filterTanNames('forgotTan')"> 第1組</label>
+        <label class="group-option"><input type="radio" name="forgotGroupSelect" value="2" onclick="filterTanNames('forgotTan')"> 第2組</label>
+        <label class="group-option"><input type="radio" name="forgotGroupSelect" value="3" onclick="filterTanNames('forgotTan')"> 第3組</label>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>壇名：</label>
+      <select id="forgotTan" required disabled><option value="">請先圈選組別...</option></select>
+    </div>
+    <div class="input-group">
+      <label>姓名：</label>
+      <input type="text" id="forgotName" required placeholder="請輸入真實姓名">
+    </div>
+    <div class="input-group">
+      <label>Gmail 郵箱：</label>
+      <input type="email" id="forgotUser" required placeholder="請輸入註冊的 Gmail">
+    </div>
+    <button type="submit" id="forgotBtn">確認並發送重設信件</button>
+  </form>
+  <div id="forgotMsg" class="msg"></div>
+  <div class="footer-links" style="justify-content: flex-end;">
+    <a href="#" onclick="switchPage('login')">返回登入</a>
+  </div>
+</div>
+
+<div id="resetPage" class="container hidden">
+  <h2>修改新密碼</h2>
+  <div class="input-group">
+    <label>壇名：</label>
+    <div id="resetTanShow" class="info-text">讀取中...</div>
+  </div>
+  <div class="input-group">
+    <label>姓名：</label>
+    <div id="resetNameShow" class="info-text">讀取中...</div>
+  </div>
+  <form onsubmit="submitResetPassword(); return false;">
+    <div class="input-group">
+      <label>新密碼：</label>
+      <input type="password" id="newPass" required placeholder="請輸入新密碼 (純數字)">
+      <div class="hint">請輸入新手機號碼，開頭不含0</div>
+    </div>
+    <div class="input-group">
+      <label>新密碼確認：</label>
+      <input type="password" id="newPassConfirm" required placeholder="請再次輸入新密碼">
+    </div>
+    <button type="submit" id="resetBtn">確認變更密碼</button>
+  </form>
+  <div id="resetMsg" class="msg"></div>
+</div>
+
 <script>
   // 🔗 請在此處替換成您的全新 GAS 網頁應用程式 URL
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxtPL-CCiEskMZODlHiO7Y_2Wn4wihr2WCJ5ZhCjZf41121hnpJ6W-EkVcr4DZgYJED/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzva2l5pC_Iy9ZgDAWYM4VIq1B0C7pDsJ2rK14uzKMp5WeQTIX7-J8nTYHMeKOUwH1G/exec";
   
   let allTanNames = [];
+  let currentResetToken = "";
 
   window.onload = function() {
-    fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "getTanNames" })
-    })
+    // A. 抓取原始選單資料
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getTanNames" }) })
     .then(res => res.json())
-    .then(res => {
-      if(res.success) {
-        allTanNames = res.data; 
-      } else {
-        document.getElementById("regTan").innerHTML = '<option value="">無法載入壇名資料</option>';
-      }
-    })
-    .catch(() => {
-      document.getElementById("regTan").innerHTML = '<option value="">網路連線異常</option>';
-    });
+    .then(res => { if(res.success) { allTanNames = res.data; } })
+    .catch(() => {});
+
+    // B. 偵測網址是否有帶 token 參數 (代表是從信件點進來的)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+      currentResetToken = token;
+      showResetPage(token);
+    }
   };
 
-  function filterTanNames() {
-    const selectedGroup = document.querySelector('input[name="groupSelect"]:checked').value;
-    const selectElem = document.getElementById("regTan");
+  // 組別過濾邏輯
+  function filterTanNames(elementId) {
+    const isForgot = elementId === 'forgotTan';
+    const radioName = isForgot ? 'forgotGroupSelect' : 'groupSelect';
+    const selectedGroup = document.querySelector(`input[name="${radioName}"]:checked`).value;
+    const selectElem = document.getElementById(elementId);
     
     selectElem.disabled = false;
     selectElem.innerHTML = '<option value="">請選擇壇名</option>';
     
     const filteredList = allTanNames.filter(name => name.startsWith(selectedGroup));
-    
-    if(filteredList.length > 0) {
-      filteredList.forEach(name => {
-        selectElem.innerHTML += `<option value="${name}">${name}</option>`;
-      });
-    } else {
-      selectElem.innerHTML += `<option value="">查無開頭為 ${selectedGroup} 的壇名</option>`;
-    }
+    filteredList.forEach(name => { selectElem.innerHTML += `<option value="${name}">${name}</option>`; });
   }
 
   function switchPage(page) {
     document.getElementById("loginMsg").innerText = "";
     document.getElementById("regMsg").innerText = "";
-    if(page === 'register') {
-      document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("registerPage").classList.remove("hidden");
-    } else {
-      document.getElementById("registerPage").classList.add("hidden");
-      document.getElementById("loginPage").classList.remove("hidden");
-    }
+    document.getElementById("forgotMsg").innerText = "";
+    
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("registerPage").classList.add("hidden");
+    document.getElementById("forgotPage").classList.add("hidden");
+    document.getElementById("resetPage").classList.add("hidden");
+
+    if(page === 'register') document.getElementById("registerPage").classList.remove("hidden");
+    else if(page === 'forgot') document.getElementById("forgotPage").classList.remove("hidden");
+    else document.getElementById("loginPage").classList.remove("hidden");
   }
 
-  // 執行登入 (帳號強制轉小寫發送)
+  // 1. 執行登入
   function submitLogin() {
-    const user = document.getElementById("loginUser").value.trim().toLowerCase(); // 🟢 轉小寫
+    const user = document.getElementById("loginUser").value.trim().toLowerCase();
     const pass = document.getElementById("loginPass").value;
     const btn = document.getElementById("loginBtn");
     const msg = document.getElementById("loginMsg");
+    btn.disabled = true; btn.innerText = "驗證中..."; msg.innerText = "";
     
-    btn.disabled = true;
-    btn.innerText = "驗證中...";
-    msg.innerText = "";
-    
-    fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "login", username: user, password: pass })
-    })
-    .then(res => res.json())
-    .then(result => {
-      btn.disabled = false;
-      btn.innerText = "登入";
-      if (result.success) {
-        msg.style.color = "#2ecc71";
-        msg.innerText = result.message;
-        alert("登入成功！即將進入回報頁面。");
-      } else {
-        msg.style.color = "#e74c3c";
-        msg.innerText = result.message;
-      }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.innerText = "登入";
-      msg.innerText = "連線失敗";
-    });
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "login", username: user, password: pass }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "登入";
+      if (result.success) { alert("登入成功！"); } else { msg.innerText = result.message; }
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 
-  // 執行註冊申請 (帳號強制轉小寫發送)
+  // 2. 執行註冊
   function submitRegister() {
     const tanName = document.getElementById("regTan").value;
     const realName = document.getElementById("regName").value.trim();
-    const username = document.getElementById("regUser").value.trim().toLowerCase(); // 🟢 轉小寫
+    const username = document.getElementById("regUser").value.trim().toLowerCase();
     const password = document.getElementById("regPass").value.trim();
-    const btn = document.getElementById("regBtn");
     const msg = document.getElementById("regMsg");
 
-    if(!tanName) {
-      msg.innerText = "請先選擇您的壇名";
-      return;
-    }
-    if(!username.endsWith("@gmail.com")) {
-      msg.innerText = "帳號必須為 Gmail 帳號 (需包含 @gmail.com)";
-      return;
-    }
-    if(password.startsWith("0") || isNaN(password)) {
-      msg.innerText = "密碼格式錯誤：請輸入去掉開頭0的手機號碼";
-      return;
-    }
+    if(!username.endsWith("@gmail.com")) { msg.innerText = "帳號必須為 Gmail 帳號"; return; }
+    if(password.startsWith("0") || isNaN(password)) { msg.innerText = "密碼請輸入去掉開頭0的手機號碼"; return; }
 
-    btn.disabled = true;
-    btn.innerText = "審核名單中...";
-    msg.innerText = "";
+    const btn = document.getElementById("regBtn");
+    btn.disabled = true; btn.innerText = "審核中..."; msg.innerText = "";
 
-    fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "register",
-        tanName: tanName,
-        realName: realName,
-        username: username,
-        password: password
-      })
-    })
-    .then(res => res.json())
-    .then(result => {
-      btn.disabled = false;
-      btn.innerText = "送出申請";
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "register", tanName: tanName, realName: realName, username: username, password: password }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "送出申請";
+      if(result.success) { alert(result.message); switchPage('login'); } else { msg.innerText = result.message; }
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
+  }
+
+  // 3. 忘記密碼（送出申請信）
+  function submitForgot() {
+    const tanName = document.getElementById("forgotTan").value;
+    const realName = document.getElementById("forgotName").value.trim();
+    const username = document.getElementById("forgotUser").value.trim().toLowerCase();
+    const msg = document.getElementById("forgotMsg");
+    const btn = document.getElementById("forgotBtn");
+
+    if(!tanName) { msg.innerText = "請選擇壇名"; return; }
+    btn.disabled = true; btn.innerText = "發送重設信中..."; msg.innerText = "";
+
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "forgotPassword", tanName: tanName, realName: realName, username: username }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "確認並發送重設信件";
+      if(result.success) {
+        msg.style.color = "#2ecc71"; msg.innerText = result.message;
+        alert("信件已寄出！請至您的信箱收信並點擊連結修改密碼。");
+      } else {
+        msg.style.color = "#e74c3c"; msg.innerText = result.message;
+      }
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
+  }
+
+  // 4. 解析信件連結，顯示修改密碼畫面
+  function showResetPage(token) {
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("resetPage").classList.remove("hidden");
+    
+    // 利用安全網址向 GAS 要求讀取解碼的名字資訊
+    fetch(`${GAS_URL}?action=getUserInfo&token=${token}`)
+    .then(res => res.json()).then(res => {
+      if(res.success) {
+        document.getElementById("resetTanShow").innerText = res.tanName;
+        document.getElementById("resetNameShow").innerText = res.realName;
+      } else {
+        document.getElementById("resetMsg").innerText = "無效的重設連結。";
+        document.getElementById("resetBtn").disabled = true;
+      }
+    }).catch(() => {
+      document.getElementById("resetMsg").innerText = "載入使用者資訊失敗。";
+    });
+  }
+
+  // 5. 送出新密碼變更
+  function submitResetPassword() {
+    const newPass = document.getElementById("newPass").value.trim();
+    const newPassConfirm = document.getElementById("newPassConfirm").value.trim();
+    const msg = document.getElementById("resetMsg");
+    const btn = document.getElementById("resetBtn");
+
+    if (newPass.startsWith("0") || isNaN(newPass)) { msg.innerText = "密碼格式錯誤：請輸入去掉開頭0的手機號碼"; return; }
+    if (newPass !== newPassConfirm) { msg.innerText = "變更失敗：兩次輸入的新密碼不一致！"; return; }
+
+    btn.disabled = true; btn.innerText = "正在變更密碼..."; msg.innerText = "";
+
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "resetPassword", token: currentResetToken, newPassword: newPass }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "確認變更密碼";
       if(result.success) {
         alert(result.message);
-        document.getElementById("loginUser").value = username; 
-        switchPage('login');
+        // 清除網址參數並回到登入首頁
+        window.location.href = window.location.pathname;
       } else {
-        msg.style.color = "#e74c3c";
         msg.innerText = result.message;
       }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.innerText = "送出申請";
-      msg.innerText = "連線失敗";
-    });
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 </script>
 
