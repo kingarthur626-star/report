@@ -182,7 +182,7 @@
       <label>Gmail 郵箱：</label>
       <input type="email" id="forgotUser" required placeholder="請輸入註冊的 Gmail">
     </div>
-    <button type="submit" id="forgotBtn">確認並發送重設信件</button>
+    <button type="submit" id="forgotBtn">確認身份並修改密碼</button>
   </form>
   <div id="forgotMsg" class="msg"></div>
   <div class="footer-links" style="justify-content: flex-end;">
@@ -216,29 +216,21 @@
 </div>
 
 <script>
-  // 🔗 請在此處替換成您的全新 GAS 網頁應用程式 URL
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz1_f7pw2ajyRzAJQjHcsrc4G23odYUI6EhGHerTCF4jLfopKjXy4Trc2QXBEFOu4l_/exec";
+  // 🔗 請在此處替換成您的全新 GAS 網頁應用程式 URL (結尾為 /exec)
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxvYMPUj3nXr3ej18vygbp014HawqHI6NVBCSF0d48-byZZ_WpfA2xoygatac0s7qW_/exec";
   
   let allTanNames = [];
   let currentResetToken = "";
 
   window.onload = function() {
-    // A. 抓取原始選單資料
+    // 預先載入壇名選單
     fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getTanNames" }) })
     .then(res => res.json())
     .then(res => { if(res.success) { allTanNames = res.data; } })
     .catch(() => {});
-
-    // B. 偵測網址是否有帶 token 參數 (代表是從信件點進來的)
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    if (token) {
-      currentResetToken = token;
-      showResetPage(token);
-    }
   };
 
-  // 組別過濾邏輯
+  // 篩選壇名
   function filterTanNames(elementId) {
     const isForgot = elementId === 'forgotTan';
     const radioName = isForgot ? 'forgotGroupSelect' : 'groupSelect';
@@ -252,6 +244,7 @@
     filteredList.forEach(name => { selectElem.innerHTML += `<option value="${name}">${name}</option>`; });
   }
 
+  // 畫面切換
   function switchPage(page) {
     document.getElementById("loginMsg").innerText = "";
     document.getElementById("regMsg").innerText = "";
@@ -303,7 +296,7 @@
     }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 
-  // 3. 忘記密碼（送出申請信）
+  // 3. 忘記密碼 (就地身分核對)
   function submitForgot() {
     const tanName = document.getElementById("forgotTan").value;
     const realName = document.getElementById("forgotName").value.trim();
@@ -312,41 +305,25 @@
     const btn = document.getElementById("forgotBtn");
 
     if(!tanName) { msg.innerText = "請選擇壇名"; return; }
-    btn.disabled = true; btn.innerText = "發送重設信中..."; msg.innerText = "";
+    btn.disabled = true; btn.innerText = "身份驗證中..."; msg.innerText = "";
 
     fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "forgotPassword", tanName: tanName, realName: realName, username: username }) })
     .then(res => res.json()).then(result => {
-      btn.disabled = false; btn.innerText = "確認並發送重設信件";
+      btn.disabled = false; btn.innerText = "確認身份並修改密碼";
       if(result.success) {
-        msg.style.color = "#2ecc71"; msg.innerText = result.message;
-        alert("信件已寄出！請至您的信箱收信並點擊連結修改密碼。");
+        // 驗證成功：現場直接切換頁面並秀出名字
+        currentResetToken = result.token;
+        document.getElementById("forgotPage").classList.add("hidden");
+        document.getElementById("resetPage").classList.remove("hidden");
+        document.getElementById("resetTanShow").innerText = tanName;
+        document.getElementById("resetNameShow").innerText = realName;
       } else {
-        msg.style.color = "#e74c3c"; msg.innerText = result.message;
+        msg.innerText = result.message;
       }
     }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 
-  // 4. 解析信件連結，顯示修改密碼畫面
-  function showResetPage(token) {
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("resetPage").classList.remove("hidden");
-    
-    // 利用安全網址向 GAS 要求讀取解碼的名字資訊
-    fetch(`${GAS_URL}?action=getUserInfo&token=${token}`)
-    .then(res => res.json()).then(res => {
-      if(res.success) {
-        document.getElementById("resetTanShow").innerText = res.tanName;
-        document.getElementById("resetNameShow").innerText = res.realName;
-      } else {
-        document.getElementById("resetMsg").innerText = "無效的重設連結。";
-        document.getElementById("resetBtn").disabled = true;
-      }
-    }).catch(() => {
-      document.getElementById("resetMsg").innerText = "載入使用者資訊失敗。";
-    });
-  }
-
-  // 5. 送出新密碼變更
+  // 4. 提交新密碼變更
   function submitResetPassword() {
     const newPass = document.getElementById("newPass").value.trim();
     const newPassConfirm = document.getElementById("newPassConfirm").value.trim();
@@ -363,11 +340,8 @@
       btn.disabled = false; btn.innerText = "確認變更密碼";
       if(result.success) {
         alert(result.message);
-        // 清除網址參數並回到登入首頁
-        window.location.href = window.location.pathname;
-      } else {
-        msg.innerText = result.message;
-      }
+        window.location.href = window.location.pathname; // 變更成功後刷新回首頁
+      } else { msg.innerText = result.message; }
     }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 </script>
