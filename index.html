@@ -148,8 +148,8 @@
     </div>
     <div class="input-group">
       <label>密碼：</label>
-      <input type="password" id="regPass" required placeholder="請設定密碼">
-      <div class="hint">必須含英文大小寫加數字，至少8碼</div>
+      <input type="text" id="regPass" required pattern="[1-9][0-9]*" placeholder="例如: 912345678">
+      <div class="hint">請輸入手機號碼，開頭不含0</div>
     </div>
     <button type="submit" id="regBtn">送出申請</button>
   </form>
@@ -222,13 +222,6 @@
   let allTanNames = [];
   let currentResetToken = "";
 
-  // 密碼強度檢查 (英文大小寫+數字且至少8碼)
-  function checkPasswordStrength(password) {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    return passwordRegex.test(password);
-  }
-
-  // 修正網頁載入排程，確保第一時間順暢抓取壇名資料
   window.onload = function() {
     fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getTanNames" }) })
     .then(res => res.json())
@@ -236,7 +229,12 @@
     .catch(() => {});
   };
 
-  // 篩選壇名
+  // 💡 用於驗證修改新密碼的強度檢查 (必須包含英文大小寫+數字且至少8碼)
+  function checkPasswordStrength(password) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return passwordRegex.test(password);
+  }
+
   function filterTanNames(elementId) {
     const isForgot = elementId === 'forgotTan';
     const radioName = isForgot ? 'forgotGroupSelect' : 'groupSelect';
@@ -282,6 +280,7 @@
     }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 
+  // 1. 執行註冊 (機制：強制限定為去掉開頭 0 的手機號碼純數字，且為明碼框)
   function submitRegister() {
     const tanName = document.getElementById("regTan").value;
     const realName = document.getElementById("regName").value.trim();
@@ -290,11 +289,7 @@
     const msg = document.getElementById("regMsg");
 
     if(!username.endsWith("@gmail.com")) { msg.innerText = "帳號必須為 Gmail 帳號"; return; }
-    
-    if(!checkPasswordStrength(password)) { 
-      msg.innerText = "密碼格式錯誤：必須包含英文大小寫及數字，且長度至少8碼"; 
-      return; 
-    }
+    if(password.startsWith("0") || isNaN(password)) { msg.innerText = "密碼請輸入去掉開頭0的手機號碼"; return; }
 
     const btn = document.getElementById("regBtn");
     btn.disabled = true; btn.innerText = "審核中..."; msg.innerText = "";
@@ -313,4 +308,47 @@
     const msg = document.getElementById("forgotMsg");
     const btn = document.getElementById("forgotBtn");
 
-    if(!tanName) { msg.innerText
+    if(!tanName) { msg.innerText = "請選擇壇名"; return; }
+    btn.disabled = true; btn.innerText = "身份驗證中..."; msg.innerText = "";
+
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "forgotPassword", tanName: tanName, realName: realName, username: username }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "確認身份並修改密碼";
+      if(result.success) {
+        currentResetToken = result.token;
+        document.getElementById("forgotPage").classList.add("hidden");
+        document.getElementById("resetPage").classList.remove("hidden");
+        document.getElementById("resetTanShow").innerText = tanName;
+        document.getElementById("resetNameShow").innerText = realName;
+      } else { msg.innerText = result.message; }
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
+  }
+
+  // 2. 執行修改新密碼 (機制：強制判定必須包含英文大小寫+數字且滿8碼，且改為 password 隱蔽框)
+  function submitResetPassword() {
+    const newPass = document.getElementById("newPass").value.trim();
+    const newPassConfirm = document.getElementById("newPassConfirm").value.trim();
+    const msg = document.getElementById("resetMsg");
+    const btn = document.getElementById("resetBtn");
+
+    if (!checkPasswordStrength(newPass)) { 
+      msg.innerText = "密碼格式錯誤：新密碼必須包含英文大小寫及數字，且長度至少8碼"; 
+      return; 
+    }
+    if (newPass !== newPassConfirm) { msg.innerText = "變更失敗：兩次輸入的新密碼不一致！"; return; }
+
+    btn.disabled = true; btn.innerText = "正在變更密碼..."; msg.innerText = "";
+
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "resetPassword", token: currentResetToken, newPassword: newPass }) })
+    .then(res => res.json()).then(result => {
+      btn.disabled = false; btn.innerText = "確認變更密碼";
+      if(result.success) {
+        alert(result.message);
+        window.location.href = window.location.pathname;
+      } else { msg.innerText = result.message; }
+    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
+  }
+</script>
+
+</body>
+</html>
