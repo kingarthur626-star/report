@@ -220,7 +220,7 @@
       <label>活動主辦：</label>
       <div class="host-container">
         <label class="host-option"><input type="radio" name="actHost" value="中心" required> 中心</label>
-        <label class="host-option"><input type="radio" name="actHost" value="區"> 區</label>
+        <label class="host-option"><input type="radio" name="actHost" value="本區"> 本區</label>
         <label class="host-option"><input type="radio" name="actHost" value="一組"> 一組</label>
         <label class="host-option"><input type="radio" name="actHost" value="二組"> 二組</label>
         <label class="host-option"><input type="radio" name="actHost" value="三組"> 三組</label>
@@ -542,7 +542,7 @@
     const report = myFetchedReports[index];
     if(!report) return;
 
-    // 💡 修正處：將原本錯誤的欄位指引修正，讓活動時間正確對應顯示
+    // 💡 串接後端全新修正乾淨文字的格式
     document.getElementById("mDate").innerText = report.date;
     document.getElementById("mTime").innerText = report.time || "未填";
     document.getElementById("mHost").innerText = report.host;
