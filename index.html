@@ -54,7 +54,7 @@
     .footer-links a { color: #4a90e2; text-decoration: none; font-weight: bold; }
     .footer-links a:hover { text-decoration: underline; }
     .msg { margin-top: 15px; font-size: 14px; color: #e74c3c; font-weight: bold; min-height: 20px; }
-    .hidden { display: none !important; } /* 💡 修正 1：加上 !important 確保隱藏命令絕對優先 */
+    .hidden { display: none !important; }
     .hint { font-size: 12px; color: #7f8c8d; margin-top: 4px; }
     .info-text { font-size: 16px; background: #e8f4fd; padding: 10px; border-radius: 6px; color: #2c3e50; font-weight: bold; margin-bottom: 12px; text-align: left; }
     .inline-user-box { display: flex; align-items: center; font-size: 16px; font-weight: bold; color: #34495e; margin-bottom: 16px; padding: 10px; background: #e8f4fd; border-radius: 6px; }
@@ -70,7 +70,6 @@
     .no-data { color: #95a5a6; padding: 40px 0; font-weight: bold; text-align: center; }
 
     /* 彈出視窗樣式 (Modal) */
-    /* 💡 修正 2：一律加上 class="hidden"，平時就不會擋在首頁了 */
     .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
     .modal-content { background: white; width: 100%; max-width: 380px; padding: 25px; border-radius: 12px; text-align: left; position: relative; }
     .modal-close-btn { position: absolute; top: 12px; right: 15px; font-size: 24px; color: #a4b0be; cursor: pointer; font-weight: bold; }
@@ -246,7 +245,7 @@
     </div>
     <div class="input-group">
       <label>特別思念的道親：</label>
-      <input type="number" id="actLost" required min="0" placeholder="請手動輸入人數">
+      <input type="number" id="actMiss" required min="0" placeholder="請手動輸入人數">
     </div>
     <button type="submit" class="action-btn" id="reportSubmitBtn">確認送出回報</button>
   </form>
@@ -289,6 +288,7 @@
 
 
 <script>
+  // 🔗 請在此處替換成您的 GAS 網頁應用程式 URL
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxvYMPUj3nXr3ej18vygbp014HawqHI6NVBCSF0d48-byZZ_WpfA2xoygatac0s7qW_/exec";
   
   let allTanNames = [];
@@ -449,7 +449,7 @@
     const time = document.getElementById("actTime").value || "未填";
     const title = document.getElementById("actTitle").value.trim();
     const people = document.getElementById("actPeople").value;
-    const lost = document.getElementById("actLost").value;
+    const lost = document.getElementById("actMiss").value; // 💡 修正對齊
     
     const msg = document.getElementById("reportMsg");
     const btn = document.getElementById("reportSubmitBtn");
@@ -477,4 +477,92 @@
     .then(res => res.json()).then(result => {
       btn.disabled = false; btn.innerText = "確認送出回報";
       if(result.success) {
-        msg.style.color = "#2
+        msg.style.color = "#2ecc71";
+        msg.innerText = result.message;
+        document.getElementById("actTitle").value = "";
+        document.getElementById("actPeople").value = "";
+        document.getElementById("actMiss").value = ""; // 💡 修正對齊
+        document.getElementById("actTime").value = "";
+        setTimeout(() => { switchPage('menu'); }, 1200);
+      } else {
+        msg.style.color = "#e74c3c"; msg.innerText = result.message;
+      }
+    }).catch(() => { btn.disabled = false; msg.style.color = "#e74c3c"; msg.innerText = "連線失敗"; });
+  }
+
+  function loadMyReportList() {
+    const loadMsg = document.getElementById("queryLoadMsg");
+    const container = document.getElementById("reportListContainer");
+    
+    loadMsg.innerText = "正在讀取回報紀錄...";
+    loadMsg.classList.remove("hidden");
+    container.innerHTML = "";
+    
+    fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getMyReports",
+        tanName: currentUserInfo.tanName,
+        realName: currentUserInfo.realName
+      })
+    })
+    .then(res => res.json())
+    .then(result => {
+      loadMsg.classList.add("hidden");
+      if (result.success) {
+        myFetchedReports = result.data;
+        
+        if (myFetchedReports.length === 0) {
+          container.innerHTML = '<div class="no-data">目前本壇尚無歷史回報紀錄。</div>';
+          return;
+        }
+        
+        myFetchedReports.forEach((item, index) => {
+          container.innerHTML += `
+            <div class="report-item" onclick="openDetailModal(${index})">
+              <div class="item-header">
+                <span>📅 ${item.date}</span>
+                <span>👤 填報人：${item.realName}</span>
+              </div>
+              <div class="item-title">${item.title}</div>
+              <div class="item-detail-summary">🚩 主辦：${item.host} ─ 👥 人數：${item.people}人</div>
+            </div>
+          `;
+        });
+      } else {
+        container.innerHTML = `<div class="no-data" style="color:#e74c3c">${result.message}</div>`;
+      }
+    })
+    .catch(() => {
+      loadMsg.classList.add("hidden");
+      container.innerHTML = '<div class="no-data" style="color:#e74c3c">連線失敗，請檢查網路。</div>';
+    });
+  }
+
+  function openDetailModal(index) {
+    const report = myFetchedReports[index];
+    if(!report) return;
+
+    document.getElementById("mDate").innerText = report.date;
+    document.getElementById("mTime").innerText = report.time || "未填";
+    document.getElementById("mHost").innerText = report.host;
+    document.getElementById("mTitle").innerText = report.title;
+    document.getElementById("mPeople").innerText = report.people + " 人";
+    document.getElementById("mLost").innerText = report.lost + " 人";
+    document.getElementById("mReporter").innerText = report.realName;
+    document.getElementById("mTimestamp").innerText = report.timestamp;
+
+    document.getElementById("detailModal").classList.remove("hidden");
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") { closeModal(); }
+  });
+
+  function closeModal() {
+    document.getElementById("detailModal").classList.add("hidden");
+  }
+</script>
+
+</body>
+</html>
