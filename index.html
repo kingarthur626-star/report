@@ -280,7 +280,7 @@
       <div class="modal-label" style="color:#a4b0be">填報人員：</div><div id="mReporter" class="modal-val" style="color:#a4b0be; font-weight: bold; margin-right: 15px;"></div>
     </div>
     <div class="modal-row" style="font-size: 12px;">
-      <div class="modal-label" style="color:#a4b0be">系統填報時間：</div><div id="mTimestamp" class="modal-val" style="color:#a4b0be"></div>
+      <div class="modal-label" style="color:#a4b0be">填報時間：</div><div id="mTimestamp" class="modal-val" style="color:#a4b0be"></div>
     </div>
   </div>
 </div>
@@ -493,7 +493,7 @@
     const loadMsg = document.getElementById("queryLoadMsg");
     const container = document.getElementById("reportListContainer");
     
-    loadMsg.innerText = "正在讀取回報紀錄...填";
+    loadMsg.innerText = "正在讀取回報紀錄...";
     loadMsg.classList.remove("hidden");
     container.innerHTML = "";
     
@@ -542,6 +542,7 @@
     const report = myFetchedReports[index];
     if(!report) return;
 
+    // 💡 修正處：將原本錯誤的欄位指引修正，讓活動時間正確對應顯示
     document.getElementById("mDate").innerText = report.date;
     document.getElementById("mTime").innerText = report.time || "未填";
     document.getElementById("mHost").innerText = report.host;
