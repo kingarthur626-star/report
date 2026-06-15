@@ -65,7 +65,7 @@
     .report-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
     .report-item:hover { border-color: #4a90e2; background: #f0f7ff; }
     .item-header { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; margin-bottom: 6px; }
-    .item-title { font-size: 16px; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-title { font-size: 16px; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
     .item-detail-summary { font-size: 14px; color: #57606f; margin-top: 4px; }
     .no-data { color: #95a5a6; padding: 40px 0; font-weight: bold; text-align: center; }
 
@@ -348,7 +348,6 @@
       document.getElementById("addReportPage").classList.remove("hidden");
     }
     else if(page === 'queryReport') {
-      // 💡 貼心優化：自動將大標題動態換成目前使用者的真實壇名（例如「1-本壇 回報查詢」）
       document.getElementById("queryTitleShow").innerText = `${currentUserInfo.tanName} 回報查詢`;
       document.getElementById("queryReportPage").classList.remove("hidden");
       loadMyReportList();
@@ -517,14 +516,15 @@
         }
         
         myFetchedReports.forEach((item, index) => {
+          // 💡 修正處：移除「填報人：」，僅留下頭像與姓名；同時移除主辦（🚩）欄位顯示
           container.innerHTML += `
             <div class="report-item" onclick="openDetailModal(${index})">
               <div class="item-header">
                 <span>📅 ${item.date}</span>
-                <span>👤 填報人：${item.realName}</span>
+                <span>👤 ${item.realName}</span>
               </div>
               <div class="item-title">${item.title}</div>
-              <div class="item-detail-summary">🚩 主辦：${item.host} ─ 👥 人數：${item.people}人</div>
+              <div class="item-detail-summary">👥 人數：${item.people}人</div>
             </div>
           `;
         });
