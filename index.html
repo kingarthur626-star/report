@@ -33,6 +33,9 @@
     }
     input:focus, select:focus { border-color: #4a90e2; outline: none; background-color: #fff; }
     
+    /* 💡 當輸入框被鎖定(disabled)時的灰色低調樣式 */
+    input:disabled { background-color: #e9ecef !important; color: #6c757d; cursor: not-allowed; }
+
     .host-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 5px 0; }
     .host-option { display: flex; align-items: center; background: #f1f2f6; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 15px; transition: 0.2s; }
     .host-option input { margin-right: 6px; width: 16px; height: 16px; }
@@ -232,12 +235,12 @@
     <div class="input-group">
       <label>活動主辦：</label>
       <div class="host-container">
-        <label class="host-option"><input type="radio" name="actHost" value="中心" required> 中心</label>
-        <label class="host-option"><input type="radio" name="actHost" value="本區"> 本區</label>
-        <label class="host-option"><input type="radio" name="actHost" value="一組"> 一組</label>
-        <label class="host-option"><input type="radio" name="actHost" value="二組"> 二組</label>
-        <label class="host-option"><input type="radio" name="actHost" value="三組"> 三組</label>
-        <label class="host-option"><input type="radio" name="actHost" value="本壇"> 本壇</label>
+        <label class="host-option"><input type="radio" name="actHost" value="中心" required onclick="handleHostChange(this.value)"> 中心</label>
+        <label class="host-option"><input type="radio" name="actHost" value="本區" onclick="handleHostChange(this.value)"> 本區</label>
+        <label class="host-option"><input type="radio" name="actHost" value="一組" onclick="handleHostChange(this.value)"> 一組</label>
+        <label class="host-option"><input type="radio" name="actHost" value="二組" onclick="handleHostChange(this.value)"> 二組</label>
+        <label class="host-option"><input type="radio" name="actHost" value="三組" onclick="handleHostChange(this.value)"> 三組</label>
+        <label class="host-option"><input type="radio" name="actHost" value="本壇" onclick="handleHostChange(this.value)"> 本壇</label>
       </div>
     </div>
     <div class="input-group">
@@ -355,6 +358,19 @@
     .catch(() => {});
   };
 
+  // 💡 新增：核心主辦單位切換邏輯
+  function handleHostChange(selectedValue) {
+    const peopleInput = document.getElementById("actPeople");
+    if (selectedValue === "本壇") {
+      peopleInput.disabled = false;    // 開放輸入
+      peopleInput.value = "";          // 恢復空白
+      peopleInput.placeholder = "請手動輸入人數";
+    } else {
+      peopleInput.disabled = true;     // 封鎖輸入（呈現灰色）
+      peopleInput.value = 0;           // 自動帶入 0
+    }
+  }
+
   function checkPasswordStrength(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return passwordRegex.test(password);
@@ -400,6 +416,13 @@
     else if(page === 'addReport') {
       document.getElementById("reportUserShow").innerText = `${currentUserInfo.tanName} ─ ${currentUserInfo.realName}`;
       document.getElementById("actDate").value = new Date().toISOString().split('T')[0];
+      
+      // 💡 進入新增頁面時，重設人數格子為開放狀態
+      const peopleInput = document.getElementById("actPeople");
+      peopleInput.disabled = false;
+      peopleInput.value = "";
+      peopleInput.placeholder = "請先圈選活動主辦...";
+      
       document.getElementById("addReportPage").classList.remove("hidden");
     }
     else if(page === 'queryReport') {
@@ -516,9 +539,12 @@
     const date = document.getElementById("actDate").value;
     const time = document.getElementById("actTime").value || "未填";
     const title = document.getElementById("actTitle").value.trim();
-    const people = document.getElementById("actPeople").value;
-    const lost = document.getElementById("actMiss").value;
     
+    // 💡 修正處：如果欄位被鎖定，直接取 0 傳送給後端
+    const peopleInput = document.getElementById("actPeople");
+    const people = peopleInput.disabled ? 0 : peopleInput.value;
+    
+    const lost = document.getElementById("actMiss").value;
     const msg = document.getElementById("reportMsg");
     const btn = document.getElementById("reportSubmitBtn");
     
@@ -559,7 +585,6 @@
     }).catch(() => { btn.disabled = false; msg.style.color = "#e74c3c"; msg.innerText = "連線失敗"; });
   }
 
-  // 讀取本壇紀錄
   function loadMyReportList() {
     const loadMsg = document.getElementById("queryLoadMsg");
     const container = document.getElementById("reportListContainer");
@@ -603,7 +628,6 @@
     });
   }
 
-  // 讀取全區大統計
   function loadQuStatsData() {
     const start = document.getElementById("statsStartDate").value;
     const end = document.getElementById("statsEndDate").value;
@@ -627,7 +651,6 @@
         tableWrapper.classList.remove("hidden");
         
         currentStatsData.forEach(row => {
-          // 💡 核心優化：使用三元運算子判斷是否為 0，若是 0 則渲染為空白字串 ""，否則正常帶入數字與單位
           const countStr = row.actCount === 0 ? "" : row.actCount + " 次";
           const peopleStr = row.totalPeople === 0 ? "" : row.totalPeople + " 人";
           const lostStr = row.totalLost === 0 ? "" : row.totalLost + " 人";
@@ -651,7 +674,6 @@
     });
   }
 
-  // 匯出 Excel (CSV 一律保留真實數字 0 供資料留存)
   function exportStatsToCSV() {
     if(currentStatsData.length === 0) { alert("目前沒有可匯出的統計數據！"); return; }
     
