@@ -33,7 +33,6 @@
     }
     input:focus, select:focus { border-color: #4a90e2; outline: none; background-color: #fff; }
     
-    /* 💡 當輸入框被鎖定(disabled)時的灰色低調樣式 */
     input:disabled { background-color: #e9ecef !important; color: #6c757d; cursor: not-allowed; }
 
     .host-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 5px 0; }
@@ -100,7 +99,7 @@
 <body>
 
 <div id="loginPage" class="container">
-  <h2>新莊區 誠字班<br>執行回報系統</h2>
+  <h2>新莊區 誠字班<br>執行回報</h2>
   <form onsubmit="submitLogin(); return false;">
     <div class="input-group">
       <label>帳號：</label>
@@ -235,7 +234,7 @@
     <div class="input-group">
       <label>活動主辦：</label>
       <div class="host-container">
-        <label class="host-option"><input type="radio" name="actHost" value="中心" required onclick="handleHostChange(this.value)"> 中心</label>
+        <label class="host-option"><input type="radio" name="actHost" value="中心" required  onclick="handleHostChange(this.value)"> 中心</label>
         <label class="host-option"><input type="radio" name="actHost" value="本區" onclick="handleHostChange(this.value)"> 本區</label>
         <label class="host-option"><input type="radio" name="actHost" value="一組" onclick="handleHostChange(this.value)"> 一組</label>
         <label class="host-option"><input type="radio" name="actHost" value="二組" onclick="handleHostChange(this.value)"> 二組</label>
@@ -358,16 +357,15 @@
     .catch(() => {});
   };
 
-  // 💡 新增：核心主辦單位切換邏輯
   function handleHostChange(selectedValue) {
     const peopleInput = document.getElementById("actPeople");
     if (selectedValue === "本壇") {
-      peopleInput.disabled = false;    // 開放輸入
-      peopleInput.value = "";          // 恢復空白
+      peopleInput.disabled = false;
+      peopleInput.value = "";
       peopleInput.placeholder = "請手動輸入人數";
     } else {
-      peopleInput.disabled = true;     // 封鎖輸入（呈現灰色）
-      peopleInput.value = 0;           // 自動帶入 0
+      peopleInput.disabled = true;
+      peopleInput.value = 0;
     }
   }
 
@@ -417,7 +415,6 @@
       document.getElementById("reportUserShow").innerText = `${currentUserInfo.tanName} ─ ${currentUserInfo.realName}`;
       document.getElementById("actDate").value = new Date().toISOString().split('T')[0];
       
-      // 💡 進入新增頁面時，重設人數格子為開放狀態
       const peopleInput = document.getElementById("actPeople");
       peopleInput.disabled = false;
       peopleInput.value = "";
@@ -540,7 +537,6 @@
     const time = document.getElementById("actTime").value || "未填";
     const title = document.getElementById("actTitle").value.trim();
     
-    // 💡 修正處：如果欄位被鎖定，直接取 0 傳送給後端
     const peopleInput = document.getElementById("actPeople");
     const people = peopleInput.disabled ? 0 : peopleInput.value;
     
