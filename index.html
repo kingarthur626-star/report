@@ -68,7 +68,7 @@
     .item-detail-summary { font-size: 14px; color: #57606f; margin-top: 4px; display: flex; justify-content: space-between; }
     .no-data { color: #95a5a6; padding: 40px 0; font-weight: bold; text-align: center; }
 
-    /* 💡 統計專用美化表格樣式 */
+    /* 統計專用美化表格樣式 */
     .stats-table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; max-height: 300px; border: 1px solid #e2e8f0; border-radius: 8px; }
     .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; background: white; }
     .stats-table th { background-color: #f1f5f9; color: #34495e; font-weight: bold; padding: 10px 6px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #cbd5e1; }
@@ -346,7 +346,7 @@
   let currentResetToken = "";
   let currentUserInfo = { group: "", tanName: "", realName: "" };
   let myFetchedReports = [];
-  let currentStatsData = []; // 儲存當前全區統計暫存，利於匯出
+  let currentStatsData = [];
 
   window.onload = function() {
     fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getTanNames" }) })
@@ -389,7 +389,7 @@
     document.getElementById("mainMenuPage").classList.add("hidden");
     document.getElementById("addReportPage").classList.add("hidden");
     document.getElementById("queryReportPage").classList.add("hidden");
-    document.getElementById("quStatsPage").classList.add("hidden"); // 新增
+    document.getElementById("quStatsPage").classList.add("hidden");
 
     if(page === 'register') document.getElementById("registerPage").classList.remove("hidden");
     else if(page === 'forgot') document.getElementById("forgotPage").classList.remove("hidden");
@@ -407,14 +407,12 @@
       document.getElementById("queryReportPage").classList.remove("hidden");
       loadMyReportList();
     }
-    else if(page === 'quStatsPage') { // 💡 切換至區查詢大總結
+    else if(page === 'quStatsPage') {
       document.getElementById("quStatsPage").classList.remove("hidden");
       
-      // 自動初始化預設日期範圍：當月第一天到今天
       const now = new Date();
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      // 轉換成在地時區 YYYY-MM-DD
       const offset = now.getTimezoneOffset() * 60000;
       const formattedToday = new Date(now.getTime() - offset).toISOString().split('T')[0];
       const formattedFirstDay = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
@@ -561,7 +559,7 @@
     }).catch(() => { btn.disabled = false; msg.style.color = "#e74c3c"; msg.innerText = "連線失敗"; });
   }
 
-  // 讀取本壇紀錄清單
+  // 讀取本壇紀錄
   function loadMyReportList() {
     const loadMsg = document.getElementById("queryLoadMsg");
     const container = document.getElementById("reportListContainer");
@@ -605,7 +603,7 @@
     });
   }
 
-  // 💡 新增：向後端請求全區統計數據並渲染表格
+  // 讀取全區大統計
   function loadQuStatsData() {
     const start = document.getElementById("statsStartDate").value;
     const end = document.getElementById("statsEndDate").value;
@@ -629,12 +627,17 @@
         tableWrapper.classList.remove("hidden");
         
         currentStatsData.forEach(row => {
+          // 💡 核心優化：使用三元運算子判斷是否為 0，若是 0 則渲染為空白字串 ""，否則正常帶入數字與單位
+          const countStr = row.actCount === 0 ? "" : row.actCount + " 次";
+          const peopleStr = row.totalPeople === 0 ? "" : row.totalPeople + " 人";
+          const lostStr = row.totalLost === 0 ? "" : row.totalLost + " 人";
+
           tbody.innerHTML += `
             <tr>
               <td style="text-align: left; padding-left: 10px; font-weight: bold;">${row.tanName}</td>
-              <td>${row.actCount} 次</td>
-              <td>${row.totalPeople} 人</td>
-              <td style="color: #e67e22; font-weight: bold;">${row.totalLost} 人</td>
+              <td>${countStr}</td>
+              <td>${peopleStr}</td>
+              <td style="color: #e67e22; font-weight: bold;">${lostStr}</td>
             </tr>
           `;
         });
@@ -648,24 +651,21 @@
     });
   }
 
-  // 💡 新增：一鍵將網頁表格數據打包下載成 Excel (CSV)
+  // 匯出 Excel (CSV 一律保留真實數字 0 供資料留存)
   function exportStatsToCSV() {
     if(currentStatsData.length === 0) { alert("目前沒有可匯出的統計數據！"); return; }
     
     const start = document.getElementById("statsStartDate").value;
     const end = document.getElementById("statsEndDate").value;
     
-    // 定義 CSV 標頭
-    let csvContent = "\uFEFF"; // 加上 UTF-8 BOM 防止 Excel 打開變亂碼
+    let csvContent = "\uFEFF"; 
     csvContent += `新莊區 誠字班數據統計 (${start} ~ ${end})\n`;
     csvContent += "壇名,活動總次數,活動總人數,久違道親總人數\n";
     
-    // 注入列資料
     currentStatsData.forEach(row => {
       csvContent += `"${row.tanName}",${row.actCount},${row.totalPeople},${row.totalLost}\n`;
     });
     
-    // 創建下載連結
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
