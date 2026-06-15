@@ -66,7 +66,7 @@
     .report-item:hover { border-color: #4a90e2; background: #f0f7ff; }
     .item-header { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; margin-bottom: 6px; }
     .item-title { font-size: 16px; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-    .item-detail-summary { font-size: 14px; color: #57606f; margin-top: 4px; }
+    .item-detail-summary { font-size: 14px; color: #57606f; margin-top: 4px; display: flex; justify-content: space-between; }
     .no-data { color: #95a5a6; padding: 40px 0; font-weight: bold; text-align: center; }
 
     /* 彈出視窗樣式 (Modal) */
@@ -517,6 +517,7 @@
         }
         
         myFetchedReports.forEach((item, index) => {
+          // 💡 修正處：卡片底部的 item-detail-summary 使用了彈性排列（space-between），左右對稱呈現兩種人數
           container.innerHTML += `
             <div class="report-item" onclick="openDetailModal(${index})">
               <div class="item-header">
@@ -524,7 +525,10 @@
                 <span>👤 ${item.realName}</span>
               </div>
               <div class="item-title">${item.title}</div>
-              <div class="item-detail-summary">👥 人數：${item.people}人</div>
+              <div class="item-detail-summary">
+                <span>👥 活動人數：${item.people}人</span>
+                <span style="color: #e67e22; font-weight: bold;">🏃 久違道親：${item.lost}人</span>
+              </div>
             </div>
           `;
         });
@@ -542,7 +546,6 @@
     const report = myFetchedReports[index];
     if(!report) return;
 
-    // 💡 串接後端全新修正乾淨文字的格式
     document.getElementById("mDate").innerText = report.date;
     document.getElementById("mTime").innerText = report.time || "未填";
     document.getElementById("mHost").innerText = report.host;
