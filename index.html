@@ -256,8 +256,7 @@
 </div>
 
 <div id="queryReportPage" class="container hidden">
-  <h2>個人執行回報查詢</h2>
-  <div class="inline-user-box">查詢對象：<span id="queryUserShow"></span></div>
+  <h2 id="queryTitleShow">壇名 回報查詢</h2>
   
   <div id="queryLoadMsg" style="color: #7f8c8d; font-weight: bold; margin: 15px 0;">正在讀取回報紀錄...</div>
   <div id="reportListContainer" class="report-list"></div>
@@ -288,7 +287,6 @@
 
 
 <script>
-  // 🔗 請在此處替換成您的 GAS 網頁應用程式 URL
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxvYMPUj3nXr3ej18vygbp014HawqHI6NVBCSF0d48-byZZ_WpfA2xoygatac0s7qW_/exec";
   
   let allTanNames = [];
@@ -350,7 +348,8 @@
       document.getElementById("addReportPage").classList.remove("hidden");
     }
     else if(page === 'queryReport') {
-      document.getElementById("queryUserShow").innerText = `${currentUserInfo.tanName} ─ ${currentUserInfo.realName}`;
+      // 💡 貼心優化：自動將大標題動態換成目前使用者的真實壇名（例如「1-本壇 回報查詢」）
+      document.getElementById("queryTitleShow").innerText = `${currentUserInfo.tanName} 回報查詢`;
       document.getElementById("queryReportPage").classList.remove("hidden");
       loadMyReportList();
     }
@@ -432,137 +431,4 @@
       msg.innerText = "密碼格式錯誤：新密碼必須包含英文大小寫及數字，且長度至少8碼"; 
       return; 
     }
-    if (newPass !== newPassConfirm) { msg.innerText = "變更失敗：兩次輸入的新密碼不一致！"; return; }
-
-    btn.disabled = true; btn.innerText = "正在變更密碼..."; msg.innerText = "";
-
-    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "resetPassword", token: currentResetToken, newPassword: newPass }) })
-    .then(res => res.json()).then(result => {
-      btn.disabled = false; btn.innerText = "確認變更密碼";
-      if(result.success) { alert(result.message); switchPage('login'); } else { msg.innerText = result.message; }
-    }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
-  }
-
-  function submitReportForm() {
-    const host = document.querySelector('input[name="actHost"]:checked').value;
-    const date = document.getElementById("actDate").value;
-    const time = document.getElementById("actTime").value || "未填";
-    const title = document.getElementById("actTitle").value.trim();
-    const people = document.getElementById("actPeople").value;
-    const lost = document.getElementById("actMiss").value; // 💡 修正對齊
-    
-    const msg = document.getElementById("reportMsg");
-    const btn = document.getElementById("reportSubmitBtn");
-    
-    if(parseInt(people) < 0 || parseInt(lost) < 0) {
-      msg.style.color = "#e74c3c"; msg.innerText = "人數不能為負數！"; return;
-    }
-    
-    btn.disabled = true; btn.innerText = "正在傳送回報..."; msg.innerText = "";
-    
-    const reportData = {
-      action: "submitReport",
-      group: currentUserInfo.group,
-      tanName: currentUserInfo.tanName,
-      realName: currentUserInfo.realName,
-      host: host,
-      date: date,
-      time: time,
-      title: title,
-      people: people,
-      lost: lost
-    };
-    
-    fetch(GAS_URL, { method: "POST", body: JSON.stringify(reportData) })
-    .then(res => res.json()).then(result => {
-      btn.disabled = false; btn.innerText = "確認送出回報";
-      if(result.success) {
-        msg.style.color = "#2ecc71";
-        msg.innerText = result.message;
-        document.getElementById("actTitle").value = "";
-        document.getElementById("actPeople").value = "";
-        document.getElementById("actMiss").value = ""; // 💡 修正對齊
-        document.getElementById("actTime").value = "";
-        setTimeout(() => { switchPage('menu'); }, 1200);
-      } else {
-        msg.style.color = "#e74c3c"; msg.innerText = result.message;
-      }
-    }).catch(() => { btn.disabled = false; msg.style.color = "#e74c3c"; msg.innerText = "連線失敗"; });
-  }
-
-  function loadMyReportList() {
-    const loadMsg = document.getElementById("queryLoadMsg");
-    const container = document.getElementById("reportListContainer");
-    
-    loadMsg.innerText = "正在讀取回報紀錄...";
-    loadMsg.classList.remove("hidden");
-    container.innerHTML = "";
-    
-    fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "getMyReports",
-        tanName: currentUserInfo.tanName,
-        realName: currentUserInfo.realName
-      })
-    })
-    .then(res => res.json())
-    .then(result => {
-      loadMsg.classList.add("hidden");
-      if (result.success) {
-        myFetchedReports = result.data;
-        
-        if (myFetchedReports.length === 0) {
-          container.innerHTML = '<div class="no-data">目前本壇尚無歷史回報紀錄。</div>';
-          return;
-        }
-        
-        myFetchedReports.forEach((item, index) => {
-          container.innerHTML += `
-            <div class="report-item" onclick="openDetailModal(${index})">
-              <div class="item-header">
-                <span>📅 ${item.date}</span>
-                <span>👤 填報人：${item.realName}</span>
-              </div>
-              <div class="item-title">${item.title}</div>
-              <div class="item-detail-summary">🚩 主辦：${item.host} ─ 👥 人數：${item.people}人</div>
-            </div>
-          `;
-        });
-      } else {
-        container.innerHTML = `<div class="no-data" style="color:#e74c3c">${result.message}</div>`;
-      }
-    })
-    .catch(() => {
-      loadMsg.classList.add("hidden");
-      container.innerHTML = '<div class="no-data" style="color:#e74c3c">連線失敗，請檢查網路。</div>';
-    });
-  }
-
-  function openDetailModal(index) {
-    const report = myFetchedReports[index];
-    if(!report) return;
-
-    document.getElementById("mDate").innerText = report.date;
-    document.getElementById("mTime").innerText = report.time || "未填";
-    document.getElementById("mHost").innerText = report.host;
-    document.getElementById("mTitle").innerText = report.title;
-    document.getElementById("mPeople").innerText = report.people + " 人";
-    document.getElementById("mLost").innerText = report.lost + " 人";
-    document.getElementById("mReporter").innerText = report.realName;
-    document.getElementById("mTimestamp").innerText = report.timestamp;
-
-    document.getElementById("detailModal").classList.remove("hidden");
-  }
-
-  document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") { closeModal(); }
-  });
-
-  function closeModal() {
-    document.getElementById("detailModal").classList.add("hidden");
-  }
-</script>
-
-</body>
-</html>
+    if (newPass !== newPassConfirm) { msg.innerText = "變更失敗：兩次輸入的新密碼不一致！"; return;
