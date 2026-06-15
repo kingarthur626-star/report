@@ -57,13 +57,9 @@
     .hidden { display: none !important; }
     .hint { font-size: 12px; color: #7f8c8d; margin-top: 4px; }
     .info-text { font-size: 16px; background: #e8f4fd; padding: 10px; border-radius: 6px; color: #2c3e50; font-weight: bold; margin-bottom: 12px; text-align: left; }
-    .inline-user-box { display: flex; align-items: center; font-size: 16px; font-weight: bold; color: #34495e; margin-bottom: 16px; padding: 10px; background: #e8f4fd; border-radius: 6px; }
-    .inline-user-box span { color: #2c3e50; margin-left: 8px; font-weight: normal; }
-
-    /* 💡 修正處：微調新增頁面最下方低調的填報人小字樣式 */
     .bottom-reporter-box { font-size: 13px; color: #94a3b8; margin-top: 20px; margin-bottom: 5px; text-align: center; }
 
-    /* 查詢清單專用樣式 */
+    /* 查詢清單與表格專用樣式 */
     .report-list { text-align: left; margin-top: 15px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
     .report-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
     .report-item:hover { border-color: #4a90e2; background: #f0f7ff; }
@@ -71,6 +67,21 @@
     .item-title { font-size: 16px; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
     .item-detail-summary { font-size: 14px; color: #57606f; margin-top: 4px; display: flex; justify-content: space-between; }
     .no-data { color: #95a5a6; padding: 40px 0; font-weight: bold; text-align: center; }
+
+    /* 💡 統計專用美化表格樣式 */
+    .stats-table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; max-height: 300px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; background: white; }
+    .stats-table th { background-color: #f1f5f9; color: #34495e; font-weight: bold; padding: 10px 6px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #cbd5e1; }
+    .stats-table td { padding: 10px 6px; border-bottom: 1px solid #e2e8f0; color: #2c3e50; }
+    .stats-table tr:hover { background-color: #f8fafc; }
+    
+    .date-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .date-row .input-group { margin-bottom: 0; flex: 1; }
+    .date-row label { font-size: 13px; margin-bottom: 4px; }
+    .date-row input[type="date"] { padding: 8px; font-size: 14px; }
+    .small-action-btn { padding: 8px 14px; background-color: #4a90e2; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .export-btn { background-color: #2ecc71; margin-left: auto; display: block; margin-bottom: 10px; }
+    .export-btn:hover { background-color: #27ae60; }
 
     /* 彈出視窗樣式 (Modal) */
     .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
@@ -208,7 +219,7 @@
     <button class="menu-btn disabled-btn" disabled><span>三、修改</span> <span>🔒</span></button>
     <button class="menu-btn disabled-btn" disabled><span>四、刪除</span> <span>🔒</span></button>
     <button class="menu-btn disabled-btn" disabled><span>五、組查詢</span> <span>🔒</span></button>
-    <button class="menu-btn disabled-btn" disabled><span>六、區查詢</span> <span>🔒</span></button>
+    <button class="menu-btn" onclick="switchPage('quStatsPage')"><span>六、區查詢</span> <span>➔</span></button>
   </div>
   <div class="footer-links" style="justify-content: center; margin-top: 25px;">
     <a href="#" onclick="logOut()" style="color: #e74c3c;">登出系統</a>
@@ -217,7 +228,6 @@
 
 <div id="addReportPage" class="container hidden">
   <h2>誠字班 執行回報</h2>
-  
   <form onsubmit="submitReportForm(); return false;">
     <div class="input-group">
       <label>活動主辦：</label>
@@ -250,11 +260,7 @@
       <label>久違道親：</label>
       <input type="number" id="actMiss" required min="0" placeholder="請手動輸入人數">
     </div>
-
-    <div class="bottom-reporter-box">
-      填報人：<span id="reportUserShow"></span>
-    </div>
-
+    <div class="bottom-reporter-box">填報人：<span id="reportUserShow"></span></div>
     <button type="submit" class="action-btn" id="reportSubmitBtn">確認送出回報</button>
   </form>
   <div id="reportMsg" class="msg" style="color: #2ecc71;"></div>
@@ -265,9 +271,48 @@
 
 <div id="queryReportPage" class="container hidden">
   <h2 id="queryTitleShow">壇名 回報查詢</h2>
-  
   <div id="queryLoadMsg" style="color: #7f8c8d; font-weight: bold; margin: 15px 0;">正在讀取回報紀錄...</div>
   <div id="reportListContainer" class="report-list"></div>
+  <div class="footer-links" style="margin-top: 25px;">
+    <a href="#" onclick="switchPage('menu')">返回主選單</a>
+  </div>
+</div>
+
+<div id="quStatsPage" class="container hidden" style="max-width: 460px;">
+  <h2>新莊區 全區數據總結</h2>
+  
+  <div class="date-row">
+    <div class="input-group">
+      <label>開始日期：</label>
+      <input type="date" id="statsStartDate">
+    </div>
+    <div class="input-group">
+      <label>結束日期：</label>
+      <input type="date" id="statsEndDate">
+    </div>
+  </div>
+  
+  <div style="display: flex; margin-bottom: 15px; align-items: center;">
+    <button class="small-action-btn" onclick="loadQuStatsData()">重新統計</button>
+    <button class="small-action-btn export-btn" onclick="exportStatsToCSV()">📥 匯出 Excel</button>
+  </div>
+
+  <div id="quStatsLoadMsg" style="color: #7f8c8d; font-weight: bold; margin: 15px 0;">正在進行全區大統計...</div>
+  
+  <div id="statsTableContainer" class="stats-table-wrapper hidden">
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding-left: 10px;">壇名</th>
+          <th>活動次數</th>
+          <th>活動總人數</th>
+          <th style="color: #e67e22;">久違道親</th>
+        </tr>
+      </thead>
+      <tbody id="statsTableBody">
+        </tbody>
+    </table>
+  </div>
   
   <div class="footer-links" style="margin-top: 25px;">
     <a href="#" onclick="switchPage('menu')">返回主選單</a>
@@ -301,6 +346,7 @@
   let currentResetToken = "";
   let currentUserInfo = { group: "", tanName: "", realName: "" };
   let myFetchedReports = [];
+  let currentStatsData = []; // 儲存當前全區統計暫存，利於匯出
 
   window.onload = function() {
     fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getTanNames" }) })
@@ -309,7 +355,6 @@
     .catch(() => {});
   };
 
-  // 密碼強健度檢查限制
   function checkPasswordStrength(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return passwordRegex.test(password);
@@ -344,6 +389,7 @@
     document.getElementById("mainMenuPage").classList.add("hidden");
     document.getElementById("addReportPage").classList.add("hidden");
     document.getElementById("queryReportPage").classList.add("hidden");
+    document.getElementById("quStatsPage").classList.add("hidden"); // 新增
 
     if(page === 'register') document.getElementById("registerPage").classList.remove("hidden");
     else if(page === 'forgot') document.getElementById("forgotPage").classList.remove("hidden");
@@ -360,6 +406,23 @@
       document.getElementById("queryTitleShow").innerText = `${currentUserInfo.tanName} 回報查詢`;
       document.getElementById("queryReportPage").classList.remove("hidden");
       loadMyReportList();
+    }
+    else if(page === 'quStatsPage') { // 💡 切換至區查詢大總結
+      document.getElementById("quStatsPage").classList.remove("hidden");
+      
+      // 自動初始化預設日期範圍：當月第一天到今天
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // 轉換成在地時區 YYYY-MM-DD
+      const offset = now.getTimezoneOffset() * 60000;
+      const formattedToday = new Date(now.getTime() - offset).toISOString().split('T')[0];
+      const formattedFirstDay = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
+      
+      document.getElementById("statsStartDate").value = formattedFirstDay;
+      document.getElementById("statsEndDate").value = formattedToday;
+      
+      loadQuStatsData();
     }
     else document.getElementById("loginPage").classList.remove("hidden");
   }
@@ -498,6 +561,7 @@
     }).catch(() => { btn.disabled = false; msg.style.color = "#e74c3c"; msg.innerText = "連線失敗"; });
   }
 
+  // 讀取本壇紀錄清單
   function loadMyReportList() {
     const loadMsg = document.getElementById("queryLoadMsg");
     const container = document.getElementById("reportListContainer");
@@ -506,25 +570,16 @@
     loadMsg.classList.remove("hidden");
     container.innerHTML = "";
     
-    fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "getMyReports",
-        tanName: currentUserInfo.tanName,
-        realName: currentUserInfo.realName
-      })
-    })
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getMyReports", tanName: currentUserInfo.tanName, realName: currentUserInfo.realName }) })
     .then(res => res.json())
     .then(result => {
       loadMsg.classList.add("hidden");
       if (result.success) {
         myFetchedReports = result.data;
-        
         if (myFetchedReports.length === 0) {
           container.innerHTML = '<div class="no-data">目前本壇尚無歷史回報紀錄。</div>';
           return;
         }
-        
         myFetchedReports.forEach((item, index) => {
           container.innerHTML += `
             <div class="report-item" onclick="openDetailModal(${index})">
@@ -546,8 +601,79 @@
     })
     .catch(() => {
       loadMsg.classList.add("hidden");
-      container.innerHTML = '<div class="no-data" style="color:#e74c3c">連線失敗，請檢查網路。</div>';
+      container.innerHTML = '<div class="no-data" style="color:#e74c3c">連線失敗。</div>';
     });
+  }
+
+  // 💡 新增：向後端請求全區統計數據並渲染表格
+  function loadQuStatsData() {
+    const start = document.getElementById("statsStartDate").value;
+    const end = document.getElementById("statsEndDate").value;
+    const loadMsg = document.getElementById("quStatsLoadMsg");
+    const tableWrapper = document.getElementById("statsTableContainer");
+    const tbody = document.getElementById("statsTableBody");
+    
+    if(!start || !end) { alert("請先選擇正確的開始與結束日期！"); return; }
+    
+    loadMsg.innerText = `正在計算 ${start} 至 ${end} 的全區數據...`;
+    loadMsg.classList.remove("hidden");
+    tableWrapper.classList.add("hidden");
+    tbody.innerHTML = "";
+    currentStatsData = [];
+    
+    fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getQuStats", startDate: start, endDate: end }) })
+    .then(res => res.json()).then(result => {
+      loadMsg.classList.add("hidden");
+      if(result.success) {
+        currentStatsData = result.data;
+        tableWrapper.classList.remove("hidden");
+        
+        currentStatsData.forEach(row => {
+          tbody.innerHTML += `
+            <tr>
+              <td style="text-align: left; padding-left: 10px; font-weight: bold;">${row.tanName}</td>
+              <td>${row.actCount} 次</td>
+              <td>${row.totalPeople} 人</td>
+              <td style="color: #e67e22; font-weight: bold;">${row.totalLost} 人</td>
+            </tr>
+          `;
+        });
+      } else {
+        loadMsg.innerText = result.message;
+        loadMsg.classList.remove("hidden");
+      }
+    })
+    .catch(() => {
+      loadMsg.innerText = "連線失敗，請稍後再試。";
+    });
+  }
+
+  // 💡 新增：一鍵將網頁表格數據打包下載成 Excel (CSV)
+  function exportStatsToCSV() {
+    if(currentStatsData.length === 0) { alert("目前沒有可匯出的統計數據！"); return; }
+    
+    const start = document.getElementById("statsStartDate").value;
+    const end = document.getElementById("statsEndDate").value;
+    
+    // 定義 CSV 標頭
+    let csvContent = "\uFEFF"; // 加上 UTF-8 BOM 防止 Excel 打開變亂碼
+    csvContent += `新莊區 誠字班數據統計 (${start} ~ ${end})\n`;
+    csvContent += "壇名,活動總次數,活動總人數,久違道親總人數\n";
+    
+    // 注入列資料
+    currentStatsData.forEach(row => {
+      csvContent += `"${row.tanName}",${row.actCount},${row.totalPeople},${row.totalLost}\n`;
+    });
+    
+    // 創建下載連結
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `新莊區誠字班統計_${start}_至_${end}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function openDetailModal(index) {
