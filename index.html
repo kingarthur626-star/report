@@ -60,6 +60,10 @@
     .hidden { display: none; }
     .hint { font-size: 12px; color: #7f8c8d; margin-top: 4px; }
     .info-text { font-size: 16px; background: #e8f4fd; padding: 10px; border-radius: 6px; color: #2c3e50; font-weight: bold; margin-bottom: 12px; text-align: left; }
+    
+    /* 💡 新增：使標題與名字併行的專用樣式 */
+    .inline-user-box { display: flex; align-items: center; font-size: 16px; font-weight: bold; color: #34495e; margin-bottom: 16px; padding: 10px; background: #e8f4fd; border-radius: 6px; }
+    .inline-user-box span { color: #2c3e50; margin-left: 8px; font-weight: normal; }
   </style>
 </head>
 <body>
@@ -197,16 +201,16 @@
 <div id="addReportPage" class="container hidden">
   <h2>誠字班 執行回報</h2>
   
-  <div class="input-group">
-    <label>填報人員身份：</label>
-    <div class="info-text" id="reportUserShow"></div>
+  <div class="inline-user-box">
+    填報人：<span id="reportUserShow"></span>
   </div>
 
   <form onsubmit="submitReportForm(); return false;">
     <div class="input-group">
       <label>活動主辦：</label>
       <div class="host-container">
-        <label class="host-option"><input type="radio" name="actHost" value="區" required> 區</label>
+        <label class="host-option"><input type="radio" name="actHost" value="中心" required> 中心</label>
+        <label class="host-option"><input type="radio" name="actHost" value="區"> 區</label>
         <label class="host-option"><input type="radio" name="actHost" value="第一組"> 第一組</label>
         <label class="host-option"><input type="radio" name="actHost" value="第二組"> 第二組</label>
         <label class="host-option"><input type="radio" name="actHost" value="第三組"> 第三組</label>
@@ -254,8 +258,6 @@
   
   let allTanNames = [];
   let currentResetToken = "";
-  
-  // 🟢 用來存儲當前登入者的重要資料
   let currentUserInfo = { group: "", tanName: "", realName: "" };
 
   window.onload = function() {
@@ -287,13 +289,11 @@
   }
 
   function switchPage(page) {
-    // 清除舊提示
     document.getElementById("loginMsg").innerText = "";
     document.getElementById("regMsg").innerText = "";
     document.getElementById("forgotMsg").innerText = "";
     document.getElementById("reportMsg").innerText = "";
     
-    // 隱藏全部
     document.getElementById("loginPage").classList.add("hidden");
     document.getElementById("registerPage").classList.add("hidden");
     document.getElementById("forgotPage").classList.add("hidden");
@@ -301,7 +301,6 @@
     document.getElementById("mainMenuPage").classList.add("hidden");
     document.getElementById("addReportPage").classList.add("hidden");
 
-    // 顯示指定頁面
     if(page === 'register') document.getElementById("registerPage").classList.remove("hidden");
     else if(page === 'forgot') document.getElementById("forgotPage").classList.remove("hidden");
     else if(page === 'menu') {
@@ -309,8 +308,8 @@
       document.getElementById("mainMenuPage").classList.remove("hidden");
     }
     else if(page === 'addReport') {
-      document.getElementById("reportUserShow").innerText = `第 ${currentUserInfo.group} 組 ➔ ${currentUserInfo.tanName} ➔ ${currentUserInfo.realName}`;
-      // 自動帶入今天日期為原始值
+      // 💡 配合修正 2：不顯示組別，只留下 壇名 ➔ 姓名 的文字合併顯示
+      document.getElementById("reportUserShow").innerText = `${currentUserInfo.tanName} ─ ${currentUserInfo.realName}`;
       document.getElementById("actDate").value = new Date().toISOString().split('T')[0];
       document.getElementById("addReportPage").classList.remove("hidden");
     }
@@ -333,7 +332,6 @@
     .then(res => res.json()).then(result => {
       btn.disabled = false; btn.innerText = "登入";
       if (result.success) { 
-        // 🟢 儲存登入者背景資料
         currentUserInfo = result.userIn;
         switchPage('menu'); 
       } else { msg.innerText = result.message; }
@@ -404,7 +402,6 @@
     }).catch(() => { btn.disabled = false; msg.innerText = "連線失敗"; });
   }
 
-  // 🟢 3. 新增：前端執行回報表單發送
   function submitReportForm() {
     const host = document.querySelector('input[name="actHost"]:checked').value;
     const date = document.getElementById("actDate").value;
@@ -422,7 +419,6 @@
     
     btn.disabled = true; btn.innerText = "正在傳送回報..."; msg.innerText = "";
     
-    // 打包登入者基本資料與表單填寫資料發送給後端
     const reportData = {
       action: "submitReport",
       group: currentUserInfo.group,
@@ -442,12 +438,10 @@
       if(result.success) {
         msg.style.color = "#2ecc71";
         msg.innerText = result.message;
-        // 清空表單填寫內容（保留日期）
         document.getElementById("actTitle").value = "";
         document.getElementById("actPeople").value = "";
         document.getElementById("actLost").value = "";
         document.getElementById("actTime").value = "";
-        // 一秒後自動跳回功能主選單
         setTimeout(() => { switchPage('menu'); }, 1200);
       } else {
         msg.style.color = "#e74c3c"; msg.innerText = result.message;
